@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>নোটস | ইসলামিক অ্যাপ</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: #ffffff;
+      font-family: 'Segoe UI', 'Noto Sans Bengali', 'Hind Siliguri', system-ui, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 0;
+      margin: 0;
+    }
+    .page-container {
+      max-width: 420px;
+      width: 100%;
+      background: #ffffff;
+      min-height: 100vh;
+    }
+
+    /* হেডার */
+    .page-header {
+      display: flex;
+      align-items: center;
+      padding: 14px 16px;
+      background: #ffffff;
+      border-bottom: 1px solid #f0f0f0;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(10px);
+    }
+    .back-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #f5f5f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 20px;
+      color: #333;
+      transition: 0.2s;
+      flex-shrink: 0;
+      border: none;
+      text-decoration: none;
+    }
+    .back-btn:active {
+      background: #e0e0e0;
+    }
+    .page-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a3b2e;
+      flex: 1;
+    }
+    .add-btn {
+      background: #2d5a4b;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: 0.2s;
+    }
+    .add-btn:active {
+      background: #1a3b2e;
+      transform: scale(0.95);
+    }
+
+    /* নোট লিস্ট */
+    .notes-container {
+      padding: 12px 16px 20px;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #aaa;
+    }
+    .empty-state .icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+    .empty-state p {
+      font-size: 14px;
+      color: #999;
+    }
+
+    /* নোট কার্ড */
+    .note-card {
+      background: #fdfaf3;
+      border: 1px solid #e8dcc8;
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      cursor: pointer;
+      transition: 0.2s;
+      position: relative;
+    }
+    .note-card:active {
+      background: #f5ede0;
+      transform: scale(0.98);
+    }
+    .note-card-icon {
+      width: 44px;
+      height: 44px;
+      background: #f5ecd7;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .note-card-content {
+      flex: 1;
+      min-width: 0;
+    }
+    .note-card-text {
+      font-size: 13px;
+      color: #333;
+      line-height: 1.5;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      margin-bottom: 6px;
+    }
+    .note-card-date {
+      font-size: 11px;
+      color: #999;
+    }
+    .note-card-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .note-action-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.2s;
+    }
+    .edit-btn {
+      background: #e8f0e8;
+      color: #2d5a4b;
+    }
+    .edit-btn:active {
+      background: #c8dcc8;
+    }
+    .delete-btn {
+      background: #fce8e8;
+      color: #c0392b;
+    }
+    .delete-btn:active {
+      background: #f5c8c8;
+    }
+
+    /* মডাল */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+    .modal-box {
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 24px 20px;
+      width: 90%;
+      max-width: 380px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+    .modal-box h3 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a3b2e;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .modal-textarea {
+      width: 100%;
+      padding: 14px;
+      border: 1.5px solid #e0d5c0;
+      border-radius: 14px;
+      font-size: 14px;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 100px;
+      background: #fafaf8;
+      outline: none;
+      transition: 0.3s;
+      margin-bottom: 16px;
+    }
+    .modal-textarea:focus {
+      border-color: #2d5a4b;
+      box-shadow: 0 0 0 3px rgba(45,90,75,0.1);
+    }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+    .modal-btn {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 25px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+      transition: 0.2s;
+    }
+    .btn-save {
+      background: #2d5a4b;
+      color: white;
+    }
+    .btn-save:active {
+      background: #1a3b2e;
+    }
+    .btn-cancel {
+      background: #e0d5c0;
+      color: #333;
+    }
+    .btn-cancel:active {
+      background: #ccbea5;
+    }
+
+    /* ডিলিট কনফার্মেশন */
+    .confirm-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .confirm-overlay.active {
+      display: flex;
+    }
+    .confirm-box {
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 24px 20px;
+      width: 85%;
+      max-width: 320px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+    .confirm-box .icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+    .confirm-box p {
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 20px;
+    }
+    .confirm-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+    .btn-delete-confirm {
+      background: #e74c3c;
+      color: white;
+      padding: 10px 24px;
+      border: none;
+      border-radius: 25px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .btn-delete-confirm:active {
+      background: #c0392b;
+    }
+    .btn-keep {
+      background: #e0d5c0;
+      color: #333;
+      padding: 10px 24px;
+      border: none;
+      border-radius: 25px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    /* টোস্ট */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #2d5a4b;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 14px;
+      z-index: 1001;
+      opacity: 0;
+      transition: 0.3s;
+      pointer-events: none;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+    .toast.show {
+      opacity: 1;
+      bottom: 40px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <!-- হেডার -->
+    <div class="page-header">
+      <button class="back-btn" onclick="goBack()" title="ফিরে যান">←</button>
+      <span class="page-title">আমার নোটস</span>
+      <button class="add-btn" onclick="openAddNoteModal()">+ নতুন</button>
+    </div>
+
+    <!-- নোট লিস্ট -->
+    <div class="notes-container" id="notesContainer">
+      <div class="empty-state">
+        <div class="icon">📝</div>
+        <p>কোনো নোট নেই</p>
+        <p style="font-size:12px;margin-top:4px;">নতুন নোট যোগ করতে "+ নতুন" বাটনে ক্লিক করুন</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- নোট এড/এডিট মডাল -->
+  <div class="modal-overlay" id="noteModal">
+    <div class="modal-box">
+      <h3 id="noteModalTitle">নতুন নোট</h3>
+      <textarea class="modal-textarea" id="noteText" placeholder="আপনার নোট লিখুন..."></textarea>
+      <input type="hidden" id="editNoteId" value="">
+      <div class="modal-actions">
+        <button class="modal-btn btn-cancel" onclick="closeNoteModal()">বাতিল</button>
+        <button class="modal-btn btn-save" onclick="saveNote()">সংরক্ষণ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ডিলিট কনফার্মেশন -->
+  <div class="confirm-overlay" id="deleteConfirm">
+    <div class="confirm-box">
+      <div class="icon">🗑️</div>
+      <p>আপনি কি নোটটি মুছে ফেলতে চান?</p>
+      <p style="font-size:11px;color:#999;">একবার ডিলিট করলে আর ফেরত পাওয়া যাবে না</p>
+      <div class="confirm-actions">
+        <button class="btn-keep" onclick="closeDeleteConfirm()">রাখুন</button>
+        <button class="btn-delete-confirm" id="confirmDeleteBtn">ডিলিট</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- টোস্ট -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ========== কনফিগারেশন ==========
+    // আপনার মেইন অ্যাপের URL এখানে বসান (হোস্টিং করার পর)
+    const MAIN_APP_URL = 'https://আপনার-ডোমেইন.com/index.html';
+    
+    // ========== ডাটা ম্যানেজমেন্ট ==========
+    const STORAGE_KEY = 'islamic_app_notes';
+    let notes = [];
+    let deleteTargetId = null;
+
+    function loadNotes() {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        notes = stored ? JSON.parse(stored) : [];
+      } catch (e) {
+        notes = [];
+      }
+    }
+
+    function saveNotesToStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+      } catch (e) {
+        showToast('⚠️ স্টোরেজ পূর্ণ! কিছু নোট ডিলিট করুন');
+      }
+    }
+
+    function generateId() {
+      return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+    }
+
+    // ========== রেন্ডার ==========
+    function renderNotes() {
+      const container = document.getElementById('notesContainer');
+      
+      if (notes.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">📝</div>
+            <p>কোনো নোট নেই</p>
+            <p style="font-size:12px;margin-top:4px;">নতুন নোট যোগ করতে "+ নতুন" বাটনে ক্লিক করুন</p>
+          </div>
+        `;
+        return;
+      }
+
+      const reversedNotes = [...notes].reverse();
+
+      container.innerHTML = reversedNotes.map(note => `
+        <div class="note-card">
+          <div class="note-card-icon">📝</div>
+          <div class="note-card-content" onclick="openEditNoteModal('${note.id}')">
+            <div class="note-card-text">${escapeHtml(note.text)}</div>
+            <div class="note-card-date">${formatDate(note.createdAt)}</div>
+          </div>
+          <div class="note-card-actions">
+            <button class="note-action-btn edit-btn" onclick="event.stopPropagation(); openEditNoteModal('${note.id}')" title="এডিট">✎</button>
+            <button class="note-action-btn delete-btn" onclick="event.stopPropagation(); confirmDelete('${note.id}')" title="ডিলিট">✕</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diff = now - date;
+      const minutes = Math.floor(diff / 60000);
+      const hours = Math.floor(diff / 3600000);
+      const days = Math.floor(diff / 86400000);
+
+      if (minutes < 1) return 'এইমাত্র';
+      if (minutes < 60) return `${minutes} মিনিট আগে`;
+      if (hours < 24) return `${hours} ঘন্টা আগে`;
+      if (days < 7) return `${days} দিন আগে`;
+      
+      return date.toLocaleDateString('bn-BD', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    // ========== নোট অপারেশন ==========
+    function openAddNoteModal() {
+      document.getElementById('noteModalTitle').textContent = 'নতুন নোট';
+      document.getElementById('noteText').value = '';
+      document.getElementById('editNoteId').value = '';
+      document.getElementById('noteModal').classList.add('active');
+      setTimeout(() => document.getElementById('noteText').focus(), 300);
+    }
+
+    function openEditNoteModal(id) {
+      const note = notes.find(n => n.id === id);
+      if (!note) return;
+      document.getElementById('noteModalTitle').textContent = 'নোট সম্পাদনা';
+      document.getElementById('noteText').value = note.text;
+      document.getElementById('editNoteId').value = id;
+      document.getElementById('noteModal').classList.add('active');
+      setTimeout(() => document.getElementById('noteText').focus(), 300);
+    }
+
+    function saveNote() {
+      const text = document.getElementById('noteText').value.trim();
+      const editId = document.getElementById('editNoteId').value;
+
+      if (!text) {
+        showToast('⚠️ নোট লিখুন!');
+        return;
+      }
+
+      if (editId) {
+        const noteIndex = notes.findIndex(n => n.id === editId);
+        if (noteIndex !== -1) {
+          notes[noteIndex].text = text;
+          notes[noteIndex].updatedAt = new Date().toISOString();
+          showToast('✅ নোট আপডেট হয়েছে');
+        }
+      } else {
+        const newNote = {
+          id: generateId(),
+          text: text,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        notes.push(newNote);
+        showToast('✅ নোট সংরক্ষিত হয়েছে');
+      }
+
+      saveNotesToStorage();
+      closeNoteModal();
+      renderNotes();
+    }
+
+    function confirmDelete(id) {
+      deleteTargetId = id;
+      document.getElementById('deleteConfirm').classList.add('active');
+    }
+
+    function closeDeleteConfirm() {
+      deleteTargetId = null;
+      document.getElementById('deleteConfirm').classList.remove('active');
+    }
+
+    function deleteNote() {
+      if (!deleteTargetId) return;
+      
+      notes = notes.filter(n => n.id !== deleteTargetId);
+      saveNotesToStorage();
+      renderNotes();
+      closeDeleteConfirm();
+      showToast('🗑️ নোট মুছে ফেলা হয়েছে');
+    }
+
+    function closeNoteModal() {
+      document.getElementById('noteModal').classList.remove('active');
+      document.getElementById('noteText').value = '';
+      document.getElementById('editNoteId').value = '';
+    }
+
+    // ========== ব্যাক নেভিগেশন (ফিক্সড) ==========
+    function goBack() {
+      // প্রথমে চেক করুন: যদি Referrer থাকে (অর্থাৎ মেইন অ্যাপ থেকে এসেছে)
+      if (document.referrer && document.referrer !== '') {
+        window.location.href = document.referrer;
+        return;
+      }
+      
+      // যদি ব্রাউজার হিস্টরি থাকে
+      if (window.history.length > 1) {
+        window.history.back();
+        return;
+      }
+      
+      // যদি কিছুই না থাকে, মেইন অ্যাপ URL-এ যান
+      window.location.href = MAIN_APP_URL;
+    }
+
+    // ========== টোস্ট ==========
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toast._timeout);
+      toast._timeout = setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    // ========== ইভেন্ট লিসেনার ==========
+    document.getElementById('noteModal').addEventListener('click', function(e) {
+      if (e.target === this) closeNoteModal();
+    });
+
+    document.getElementById('deleteConfirm').addEventListener('click', function(e) {
+      if (e.target === this) closeDeleteConfirm();
+    });
+
+    document.getElementById('confirmDeleteBtn').addEventListener('click', deleteNote);
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        if (document.getElementById('deleteConfirm').classList.contains('active')) {
+          closeDeleteConfirm();
+        } else if (document.getElementById('noteModal').classList.contains('active')) {
+          closeNoteModal();
+        }
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        if (document.getElementById('noteModal').classList.contains('active')) {
+          saveNote();
+        }
+      }
+    });
+
+    // ========== মেইন অ্যাপ থেকে মেসেজ লিসেন (iframe ব্যবহার করলে) ==========
+    window.addEventListener('message', function(event) {
+      if (event.data === 'goBack') {
+        goBack();
+      }
+    });
+
+    // ========== ইনিশিয়ালাইজ ==========
+    function init() {
+      loadNotes();
+      renderNotes();
+      
+      // URL প্যারামিটার থেকে মেইন অ্যাপ URL সেট করুন (অপশনাল)
+      const urlParams = new URLSearchParams(window.location.search);
+      const returnUrl = urlParams.get('returnUrl');
+      if (returnUrl) {
+        // ডিকোড করে MAIN_APP_URL সেট করুন
+        const decodedUrl = decodeURIComponent(returnUrl);
+        // গ্লোবাল ভ্যারিয়েবল আপডেট
+        window.MAIN_APP_URL = decodedUrl;
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
